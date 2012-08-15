@@ -57,9 +57,9 @@ function Model(handler, isController){
 		chrome.storage.local.set(object);
 	}
 	
-	chrome.storage.onChange.addListener(function(changes, namespace){
+	chrome.storage.onChanged.addListener(function(changes, namespace){
 		for(key in changes){
-			matches = key.match(/(window|tab|window-tab):(\d+)/);
+			var matches = key.match(/(window|tab|window-tab):(\d+)/);
 			if(matches){
 				change = changes[key];
 				oldValue = change.oldValue;
@@ -110,11 +110,11 @@ function Model(handler, isController){
 						}
 						else if(!rshift && lshift){
 							//Detach
-							handler.tabAttach(oldValue[pos], pos);
+							handler.tabDetach(oldValue[pos]);
 						}
 						else if(rshift && lshift){
 							//Swap
-							handler.tabSwap(oldValue[pos], newValue[pos], pos);
+							handler.tabSwap(oldValue[pos], newValue[pos]);
 						}
 						break;
 					default :
@@ -124,23 +124,26 @@ function Model(handler, isController){
 				}
 			}
 		}
-	}
+	});
 
 	chrome.storage.local.get(null, function(storage){
 		for(key in storage){
-			matches = key.match(/(window|tab|window-tab):(\d+)/);
+			var matches = key.match(/(window|tab|window-tab):(\d+)/);
 			if(matches){
 				switch(matches[1]){
 				case "window" :
 					windows[matches[2]] = storage[key];
 					handler.windowCreate(storage[key]);
+					break;
 				case "tab" :
 					tabs[matches[2]] = storage[key];
+					break;
 				case "window-tab" :
 					tabIndexs[matches[2]] = storage[key];
-					tabIndexs[matches[2]].forEach(tabId){
+					tabIndexs[matches[2]].forEach(function(tabId){
 						handler.tabCreate(tabs[tabId], windowId);
-					}
+					});
+					break;
 				}
 			}
 		}
@@ -166,27 +169,29 @@ function Model(handler, isController){
 				}
 				if(match){
 					mapWin[ch_window.id] = db_windowId;
-					function(var i = 0; i < ch_tabs.length; i++){
+					for(var i = 0; i < ch_tabs.length; i++){
 						mapTab[ch_tabs[i].id] = db_tabIds[i];
 					};
-					break;
 				}
-				else if(isController){
+				else if(!!isController){
 					var db_windowId = getNewWindowId();
 					db_window = new Window(ch_window, db_windowId);
 					mapWin[ch_window] = db_windowId;
-					save({"window:" + db_windowId : db_window});
+					var db_windowKey = "window:" + db_windowId;
+					save({db_windowKey : db_window});
 					
 					db_tabs = []
 					ch_window.tabs.forEach(function(ch_tab){
 						var db_tabId = getNewTabId();
 						db_tab = new Tab(ch_tab, ch_tabId, db_windowId);
 						mapTab[ch_tabId] = db_tabId;
-						save({"tab:" + db_windowId : db_window});
+						var db_tabKey = "tab:" + db_windowId;
+						save({db_tabKey : db_window});
 						db_tabs.push(db_tabId);
 					});
 					
-					save({"window-tab:" + db_windowId : db_tabs});
+					var db_windowTabKey = "window-tab:" + db_windowId;
+					save({db_windowTabKey : db_tabs});
 				}
 			});
 		});
