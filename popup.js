@@ -184,14 +184,7 @@ function createWindowsView(windows){
 
 
 function init(){
-	createWindowsView(chrome.extension.getBackgroundPage().windowManager.getGroups());
-	//chrome.extension.onMessage.addListener(messageListener);
-	addListeners();
-}
-
-function final(event){
-	event.preventDefault();
-	removeListeners();
+	
 }
 
 window.addEventListener("unload", final);
