@@ -4,138 +4,207 @@
 
  // Utils
 ////////////////////////////////////////////////////////////////////////////////
-function $(id){
+function $$(id){
 	return document.getElementById(id);
 }
 
-function $window(window){
-	var id = typeof window == "number" ? window : window.id;
-	return $("window-" + id);
+function $$group(group){
+	var id = !isNaN(parseInt(group)) ? group : group.groupId;
+	return $$("group-" + id);
 }
 
-function $tab(tab){
-	var id = typeof tab == "number" ? tab : tab.id;
-	return $("tab-" + id);
+function $$page(page){
+	var id = !isNaN(parseInt(page)) ? page : page.pageId;
+	return $$("page-" + id);
 }
 
-function $list(window){
-	var id = typeof window == "number" ? window : window.id;
-	return $("list-" + id);
+function $$list(group){
+	var id = !isNaN(parseInt(group)) ? group : group.groupId;
+	return $$("list-" + id);
 }
+
+
+function message(msg, callback){
+	if(callback)
+		chrome.extension.sendMessage(undefined, msg, callback);
+	else
+		chrome.extension.sendMessage(undefined, msg);
+};
+
+function printData(){
+	chrome.storage.local.get(null, function(obj){console.log(obj)});
+}
+
+function $$width(element, width){
+	if(width != undefined)
+		element.style.width = width + "px";
+	else
+		return parseInt(element.style.width);
+}
+
+function $$height(element, height){
+	if(height)
+		element.style.height = height + "px";
+	else
+		return parseInt(element.style.height);
+}
+
 
 
 
  // Visual Elements
 ////////////////////////////////////////////////////////////////////////////////
-function createTabElement(tab){
+
+function sizeAllocate(list){
+	var width  = list.clientWidth;
+	var height = list.clientHeight;
+	var margin = 5;
+	var textH = 24;
+	
+	var mw = 80;
+	var mh = 60;
+	
+	var children = list.getElementsByClassName("page");
+	var len = children.length;
+	
+	var nextC;
+	var shotW;
+	var nextH;
+	var avalR = 1;
+	var currR = 0;
+	
+	while(avalR > currR){
+		currR++;
+		nextC = Math.ceil(len / currR);
+		shotW = Math.floor(width / nextC) - margin * 2;
+		nextH = Math.floor(shotW / 16 * 9) + textH + margin * 2;
+		nextH = Math.min(nextH, Math.floor(height / currR));
+		avalR = Math.floor(height / nextH);
+	}
+	var shotH = nextH - textH - margin  * 2;
+		shotW = Math.floor(shotH / 9 * 16);
+		shotH = Math.floor(shotW / 16 * 9);
+		nextH = shotH + textH;
+	
+	var trueW = shotW;
+	var trueH = nextH;
+	var marginX = Math.floor((Math.floor($$width(list.parentNode)  / nextC) - trueW) / 2);
+	var marginY = Math.floor((Math.floor($$height(list.parentNode) / currR) - trueH) / 2);
+		
+	for(var i = 0; i < len; i++){
+		var child = children[i];
+		var style = child.style;
+		if(style){
+			style.width = trueW + "px";
+			style.height = trueH + "px";
+			
+			style.margin = marginY + "px " + marginX + "px";
+			
+			child.firstChild.style.width = shotW + "px";
+			child.firstChild.style.height = shotH + "px";
+		}
+	}
+}
+
+
+function activatePage(pageId){
+	message({action : "activate-page", pageId : pageId});
+}
+
+
+function createPageElement(page){
 	var item = document.createElement("li");
-		item.id = "tab-" + tab.id;
-		var link = document.createElement("a");
-			link.href = tab.url;
-			link.textContent = tab.title;
+		item.id = "page-" + page.pageId;
+		item.classList.add("page");
+		//$$width(item, 160);
+		//$$height(item, 120);
+		var shot = document.createElement("div");
+			shot.classList.add("shot");
+		var link = document.createElement("span");
+			link.classList.add("title");
+			link.textContent = page.title;
+			link.dataset["tabid"] = page.chromeId;
 			link.addEventListener("click", function(event){
-				event.preventDefault();
-				chrome.windows.update(tab.windowId, {focused : true});
-				chrome.tabs.update(tab.id, {active : true});
-				return false;
+				activatePage(page.pageId);
 			});
-			link.draggable = false;
-			link.addEventListener("dragstart", function(event){
-				transfer = event.dataTransfer;
-				transfer.effectAllow = "move";
-				transfer.setData("text/x-tab", JSON.stringify(tab));
-				transfer.setDragImage(item, 0, 0);
-			}, false);
-			link.addEventListener("dragend", function(event){
-				if(event.dataTransfer.dropEffect == "move"){
-					item.parentNode.removeChild(item);
-				}
-			}, false);
+			link.style.fontSize = 12 + "px";
+		item.appendChild(shot);
 		item.appendChild(link);
 	return item;
 }
 
-function createWindowElement(window){
-	var win = document.createElement("div");
-		win.id = "win-" + window.id;
+function createGroupElement(group){
+	var gitem = document.createElement("div");
+		gitem.id = "group-" + group.groupId;
+		gitem.classList.add("group");
 		var name = document.createElement("h1");
-			name.textContent = window.name || "Window";
-		var tabs = document.createElement("ul");
-			tabs.id = "list-" + window.id;
-			if(window.tabs){
-				window.tabs.forEach(function(tab, no){
-					var item = createTabElement(tab);
-					tabs.appendChild(item);
-				});
-			}
-		win.addEventListener("dragover", function(event){
-			event.preventDefault();
-		}, true);
-		win.addEventListener("dragleave", function(event){
-		}, true);
-		win.addEventListener("drop", function(event){
-			transfer = event.dataTransfer;
-			var tab = JSON.parse(transfer.getData("text/x-tab"));
-			chrome.tabs.move(tab.id, {windowId : window.id, index : -1});
-			var item = createTabItem(tab);
-			tabs.appendChild(item);
-		}, true);
-		win.appendChild(name);
-		win.appendChild(tabs);
-	return win;
+			name.textContent = group.name || "Group";
+		var pages = document.createElement("ul");
+			pages.id = "list-" + group.groupId;
+		gitem.appendChild(name);
+		gitem.appendChild(pages);
+		$(gitem).resizable()
+				.bind("resize", function(event, ui) {sizeAllocate(pages)})
+				.draggable()
+				.bind("dragstop", function(event, ui){/*TODO*/});
+		
+	return gitem;
 }
 
 
  //  Handlers
 ////////////////////////////////////////////////////////////////////////////////
-function createWindow(window){
-	var win = createWindowElement(window);
-	document.body.appendChild(win);
+function createGroup(group){
+	var item = createGroupElement(group);
+	$$("container").appendChild(item);
 }
 
-function removeWindow(window){
-	var win = $window(window);
-	win.parentNode.removeChild(win);
-}
-
-function updateWindow(window){
-	var win = $window(window);
-	//TODO
-}
-
-function createTab(tab){
-	var item = createTabElement(tab);
-	var list = $list(tab.windowId);
-		$("detached").appendChild(item);
-}
-
-function removeTab(tab){
-	var item = $tab(tab);
+function removeGroup(group){
+	var item = $$group(group);
 	item.parentNode.removeChild(item);
 }
 
-function updateTab(tab){
-	var item = $tab(tab);
-	var link = item.firstChild;
-		link.href = tab.url;
-		link.textContent = tab.title;
+function updateGroup(group){
+	var item = $$group(group);
+	//TODO
 }
 
-function attachTab(tab, index){
-	var item = $tab(tab);
-	var list = $list(tab.windowId);
-	list.insertBefore(item, list.childNodes[windowId]);
+function createPage(page){
+	var item = createPageElement(page);
+	var list = $$list(page.groupId);
+		$$("detached").appendChild(item);
 }
 
-function detachTab(tab){
-	var item = $tab(tab);
-	$("detached").appendChild(item);
+function removePage(page){
+	var item = $$page(page);
+	item.parentNode.removeChild(item);
 }
 
-function swapTab(tab1, tab2){
-	var item1 = $tab(tab1);
-	var item2 = $tab(tab2);
-	item1.parentNode.insertBefore(item2, item1);
+function updatePage(page){
+	var item = $$page(page);
+	var link = item.childNodes[1];
+		link.href = page.url;
+		link.textContent = page.title;
+}
+
+function attachPage(pageId, groupId, index){
+	var item = $$page(pageId);
+	var list = $$list(groupId);
+	list.insertBefore(item, list.childNodes[index]);
+	sizeAllocate(list);
+}
+
+function detachPage(pageId){
+	var item = $$page(pageId);
+	var list = item.parentNode;
+	$$("detached").appendChild(item);
+	sizeAllocate(list);
+}
+
+function movePage(pageId, groupId, index){
+	var item = $$page(pageId);
+	var list = item.parentNode;
+	list.insertBefore(item, list.childNodes[index]);
 }
 
 
@@ -145,17 +214,20 @@ function swapTab(tab1, tab2){
 
 function init(){
 	var handler = {
-		windowCreate : createWindow,
-		windowRemove : removeWindow,
-		windowUpdate : updateWindow,
-		tabCreate : createTab,
-		tabRemove : removeTab,
-		tabUpdate : updateTab,
-		tabAttach : attachTab,
-		tabDetach : detachTab,
-		tabSwap : swapTab
+		"group-create" : createGroup,
+		"group-remove" : removeGroup,
+		"group-update" : updateGroup,
+		"page-create"  : createPage,
+		"page-remove"  : removePage,
+		"page-update"  : updatePage,
+		"page-attach"  : attachPage,
+		"page-detach"  : detachPage,
+		"page-move"    : movePage
 	};
 	var model = new Model(handler);
 }
 
 window.addEventListener("load", init);
+
+window.addEventListener("focus", function(){
+});
