@@ -1,7 +1,7 @@
 "use strict"
 
 
-function Model(handler, isController){
+function Model(handler, isController, callback){
  // Variables
 ////////////////////////////////////////////////////////////////////////////////
 	var eventTypes = [
@@ -275,6 +275,11 @@ function Model(handler, isController){
 		remove("index:" + groupId);
 	}
 	
+	function updateGroup(info, groupId){
+		GROUPS[groupId].update(info);
+		save("group:" + groupId, GROUPS[groupId]);
+	}
+	
 	function createPage(info, groupId, chromeId){
 		var pageId = getNewPageId();
 		var page = new Page(info, pageId, groupId, chromeId);
@@ -319,23 +324,42 @@ function Model(handler, isController){
 			index.splice(to, 0, pageId);
 		save("index:" + groupId, index);
 	}
+	
+	this.getGroupId = function(id){
+		return mapWin[id];
+	}
+	this.getPageId = function(id){
+		return mapPage[id];
+	}
+	this.getWindowId = function(id){
+		return GROUPS[id].chromeId;
+	}
+	this.getTabId = function(id){
+		return PAGES[id].chromeId;
+	}
+	this.getIndex = function(groupId){
+		var out;
+		var index = INDEXES[groupId];
+		if(index){
+			out = [];
+			var len = index.length;
+			for(var i in index){
+				out[i] = index[i];
+			}
+		}
+		return out;
+	}
 
 	this.getControl = function (){
 		return !isController ? null : {
-			getGroupId : function(id){
-				return mapWin[id];
-			},
-			getPageId : function(id){
-				return mapPage[id];
-			},
-			getWindowId : function(id){
-				return GROUPS[id].chromeId;
-			},
-			getTabId : function(id){
-				return PAGES[id].chromeId;
-			},
+			getGroupId  : this.getGroupId,
+			getPageId   : this.getPageId,
+			getWindowId : this.getWindowId,
+			getTabId    : this.getTabId,
+			getIndex	: this.getIndex,
 			createGroup : createGroup,
 			removeGroup : removeGroup,
+			updateGroup : updateGroup,
 			createPage  : createPage,
 			removePage  : removePage,
 			updatePage  : updatePage,

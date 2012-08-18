@@ -10,7 +10,7 @@ function $$(id){
 
 function $$group(group){
 	var id = !isNaN(parseInt(group)) ? group : group.groupId;
-	return $$("group-" + id);
+	return $$("group-head-" + id);
 }
 
 function $$page(page){
@@ -20,7 +20,7 @@ function $$page(page){
 
 function $$list(group){
 	var id = !isNaN(parseInt(group)) ? group : group.groupId;
-	return $$("list-" + id);
+	return $$("group-" + id);
 }
 
 
@@ -54,6 +54,12 @@ function $$height(element, height){
 
  // Visual Elements
 ////////////////////////////////////////////////////////////////////////////////
+function switchGroup(groupId){
+	$$("runtime-style").textContent = 
+		"#group-list .group:not(#group-" + groupId + "){display:none;}";
+	$$("group-name").textContent = $$group(groupId).firstChild.textContent;
+}
+
 
 function sizeAllocate(list){
 	var width  = list.clientWidth;
@@ -116,38 +122,40 @@ function createPageElement(page){
 	var item = document.createElement("li");
 		item.id = "page-" + page.pageId;
 		item.classList.add("page");
-		//$$width(item, 160);
-		//$$height(item, 120);
-		var shot = document.createElement("div");
-			shot.classList.add("shot");
-		var link = document.createElement("span");
+		var link = document.createElement("a");
 			link.classList.add("title");
 			link.textContent = page.title;
+			link.href = page.url;
 			link.dataset["tabid"] = page.chromeId;
+			link.dataset["pageid"] = page.pageId;
 			link.addEventListener("click", function(event){
+				event.preventDefault();
 				activatePage(page.pageId);
 			});
-			link.style.fontSize = 12 + "px";
-		item.appendChild(shot);
 		item.appendChild(link);
 	return item;
 }
 
+function createGroupHeadElement(group){
+	var gitem = document.createElement("li");
+		gitem.id = "group-head-" + group.groupId;
+		gitem.classList.add("group-head");
+		var link = document.createElement("a");
+			link.dataset["windowid"] = group.chromeId;
+			link.dataset["groupid"] = group.groupId;
+			link.textContent = group.name || "Window " + group.groupId;
+			link.addEventListener("click", function(event){
+				event.preventDefault();
+				switchGroup(group.groupId);
+			});
+		gitem.appendChild(link);
+	return gitem;
+}
+
 function createGroupElement(group){
-	var gitem = document.createElement("div");
+	var gitem = document.createElement("ul");
 		gitem.id = "group-" + group.groupId;
 		gitem.classList.add("group");
-		var name = document.createElement("h1");
-			name.textContent = group.name || "Group";
-		var pages = document.createElement("ul");
-			pages.id = "list-" + group.groupId;
-		gitem.appendChild(name);
-		gitem.appendChild(pages);
-		$(gitem).resizable()
-				.bind("resize", function(event, ui) {sizeAllocate(pages)})
-				.draggable()
-				.bind("dragstop", function(event, ui){/*TODO*/});
-		
 	return gitem;
 }
 
@@ -155,8 +163,14 @@ function createGroupElement(group){
  //  Handlers
 ////////////////////////////////////////////////////////////////////////////////
 function createGroup(group){
-	var item = createGroupElement(group);
-	$$("container").appendChild(item);
+	var head = createGroupHeadElement(group);
+	$$("group-head").appendChild(head);
+	var list = createGroupElement(group);
+	$$("group-list").appendChild(list);
+	
+	if($$("group-list").childNodes.length == 1){
+		switchGroup(group.groupId);
+	}
 }
 
 function removeGroup(group){
@@ -182,7 +196,7 @@ function removePage(page){
 
 function updatePage(page){
 	var item = $$page(page);
-	var link = item.childNodes[1];
+	var link = item.getElementsByClassName("title")[0];
 		link.href = page.url;
 		link.textContent = page.title;
 }
@@ -191,14 +205,12 @@ function attachPage(pageId, groupId, index){
 	var item = $$page(pageId);
 	var list = $$list(groupId);
 	list.insertBefore(item, list.childNodes[index]);
-	sizeAllocate(list);
 }
 
 function detachPage(pageId){
 	var item = $$page(pageId);
 	var list = item.parentNode;
 	$$("detached").appendChild(item);
-	sizeAllocate(list);
 }
 
 function movePage(pageId, groupId, index){
@@ -225,9 +237,15 @@ function init(){
 		"page-move"    : movePage
 	};
 	var model = new Model(handler);
+	/*
+	var elements = document.getElementsByClassName('dropdown-toggle');
+	for(var i in elements){
+		elements[i].addEventListener('click', function(event){
+			event.currentTarget.classList.toggle("open");
+		}, true);
+	}
+	*/
 }
 
 window.addEventListener("load", init);
 
-window.addEventListener("focus", function(){
-});

@@ -64,7 +64,12 @@ chrome.windows.onCreated.addListener(function(window){
 chrome.windows.onRemoved.addListener(function(windowId){
 	var groupId = control.getGroupId(windowId);
 	if(isNumber(groupId)){
-		control.removeGroup(groupId);
+		if(control.getIndex(groupId).length > 0){
+			control.updateGroup({chromeId : null}, groupId);
+		}
+		else{
+			control.removeGroup(groupId);
+		}
 	}
 });
 
@@ -102,7 +107,12 @@ chrome.tabs.onMoved.addListener(function(tabId, info){
 chrome.tabs.onRemoved.addListener(function(tabId, info){
 	var pageId = control.getPageId(tabId);
 	if(isNumber(pageId)){
-		control.removePage(pageId);
+		if(info.isWindowClosing){
+			control.updatePage({chromeId : null}, pageId);
+		}
+		else{
+			control.removePage(pageId);
+		}
 	}
 });
 
