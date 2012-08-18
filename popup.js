@@ -1,6 +1,10 @@
 "use strict"
 
 
+ // Variables
+////////////////////////////////////////////////////////////////////////////////
+var WINDOW_ID = -1;
+
 
  // Utils
 ////////////////////////////////////////////////////////////////////////////////
@@ -168,7 +172,7 @@ function createGroup(group){
 	var list = createGroupElement(group);
 	$$("group-list").appendChild(list);
 	
-	if($$("group-list").childNodes.length == 1){
+	if(group.chromeId === WINDOW_ID){
 		switchGroup(group.groupId);
 	}
 }
@@ -225,26 +229,22 @@ function movePage(pageId, groupId, index){
 
 
 function init(){
-	var handler = {
-		"group-create" : createGroup,
-		"group-remove" : removeGroup,
-		"group-update" : updateGroup,
-		"page-create"  : createPage,
-		"page-remove"  : removePage,
-		"page-update"  : updatePage,
-		"page-attach"  : attachPage,
-		"page-detach"  : detachPage,
-		"page-move"    : movePage
-	};
-	var model = new Model(handler);
-	/*
-	var elements = document.getElementsByClassName('dropdown-toggle');
-	for(var i in elements){
-		elements[i].addEventListener('click', function(event){
-			event.currentTarget.classList.toggle("open");
-		}, true);
-	}
-	*/
+	chrome.windows.getCurrent({}, function(window){
+		WINDOW_ID = window.id;
+	
+		var handler = {
+			"group-create" : createGroup,
+			"group-remove" : removeGroup,
+			"group-update" : updateGroup,
+			"page-create"  : createPage,
+			"page-remove"  : removePage,
+			"page-update"  : updatePage,
+			"page-attach"  : attachPage,
+			"page-detach"  : detachPage,
+			"page-move"    : movePage
+		};
+		var model = new Model(handler);
+	});
 }
 
 window.addEventListener("load", init);

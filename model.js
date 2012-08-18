@@ -44,7 +44,7 @@ function Model(handler, isController, callback){
 		this.groupId  = groupId;
 		this.chromeId = isNaN(chromeId) ? undefined : chromeId;
 		this.update   = function(info){
-			for(property in info){
+			for(var property in info){
 				if(property in this)
 					this[property] = info[property];
 			}
@@ -349,6 +349,37 @@ function Model(handler, isController, callback){
 		}
 		return out;
 	}
+	
+	this.findGroupId = function(window){
+		if(window == undefined)
+			return null;
+	
+		if(mapWin[window.id] != undefined)
+			return mapWin[window.id];
+	
+		if(window.type != "normal")
+			return null;
+			
+		var tabs = window.tabs;
+		if(window.tabs == undefined)
+			return null;
+			
+		var match = false;
+		for(var groupId in INDEXES){
+			if(GROUPS[groupId].chromeId != undefined)
+				continue;
+			
+			var index = INDEXES[groupId];
+			if(tabs.length == index.length){
+				match = index.every(function(pageId, i){
+					return tabs[i].url == PAGES[pageId].url;
+				});
+			}
+			if(match)
+				return groupId;
+		}
+		return null;
+	}
 
 	this.getControl = function (){
 		return !isController ? null : {
@@ -357,6 +388,7 @@ function Model(handler, isController, callback){
 			getWindowId : this.getWindowId,
 			getTabId    : this.getTabId,
 			getIndex	: this.getIndex,
+			findGroupId : this.findGroupId,
 			createGroup : createGroup,
 			removeGroup : removeGroup,
 			updateGroup : updateGroup,
@@ -374,19 +406,16 @@ function Model(handler, isController, callback){
 	function saveNewGroup(window){
 		var groupId = getNewGroupId();
 		var group = new Group(window, groupId, window.id);
-		save("group:" + groupId, group);
 		
 		var index = [];
 		window.tabs.forEach(function(tab){
 			var pageId = getNewPageId();
 			var page = new Page(tab, pageId, groupId, tab.id);
-			save("page:" + pageId, page);
 			PAGES[pageId] = page;
 			index.push(pageId);
 		});
 		
 		INDEXES[groupId] = index;
-		save("index:" + groupId, index);
 	}
 	
 	//map chrome windows to database windows
@@ -418,6 +447,21 @@ function Model(handler, isController, callback){
 				saveNewGroup(window);
 			}
 		});
+		
+		//Refresh database
+		var data = {};
+		GROUPS.forEach(function(group){
+			data["group:" + group.groupId] = group;
+		});
+		PAGES.forEach(function(page){
+			data["page:" + page.pageId] = page;
+		});
+		INDEXES.forEach(function(index, i){
+			data["index:" + i] = index;
+		});
+		chrome.storage.local.set(data);
+		
+		
 		execQueue.shift()();	
 	}
 	
@@ -425,14 +469,16 @@ function Model(handler, isController, callback){
 		for(key in storage){
 			var matches = key.match(/^(group):(\d+)/);
 			if(matches){
-				var group = new Group(storage[key], matches[2]);
+				var chromeId = isController ? undefined : storage[key].chromeId;
+				var group = new Group(storage[key], matches[2], chromeId);
 				handler["group-create"](group);
 			}
 		}
 		for(key in storage){
 			var matches = key.match(/^(page):(\d+)/);
 			if(matches){
-				var page = new Page(storage[key], matches[2], storage[key].groupId);
+				var chromeId = isController ? undefined : storage[key].chromeId;
+				var page = new Page(storage[key], matches[2], storage[key].groupId, chromeId);
 				handler["page-create"](page);
 			}
 		}
@@ -454,7 +500,8 @@ function Model(handler, isController, callback){
  //Init
 ////////////////////////////////////////////////////////////////////////////////
 	execQueue.push(function(){load(null, loadDatabase)});
-	execQueue.push(function(){chrome.windows.getAll({populate : true}, mapChromeWindows)});
+	if(isController)
+		execQueue.push(function(){chrome.windows.getAll({populate : true}, mapChromeWindows)});
 	execQueue.push(function(){chrome.storage.onChanged.addListener(modelEventHandler)});
 	
 	execQueue.shift()();
