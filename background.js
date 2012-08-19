@@ -1,5 +1,6 @@
 "use strict"
 
+var DEBUG;
 
  //  Utils
 ////////////////////////////////////////////////////////////////////////////////
@@ -9,6 +10,16 @@ function log(object){
 		console.log(args);
 	else
 		console.log(object);
+}
+
+function debug(object){
+	if(DEBUG){
+		var args = Array.prototype.slice.call(arguments);
+		if(args.length > 1)
+			console.debug(args);
+		else
+			console.debug(object);
+	}
 }
 
 
@@ -50,8 +61,7 @@ function clear(){
  // Init
 ////////////////////////////////////////////////////////////////////////////////
 //chrome.storage.local.clear();
-var model = new Model(null, true);
-var control = model.getControl();
+var control = new Control(null, true);
 
 
 
@@ -72,10 +82,10 @@ var processQueue = (function(){
 			//Put a lock
 			//workaround : __queue[0] is not writable
 			var position = __queue.length || 1;
-			//__queue[position] = {func : callback, argv : argv};
-			console.log(["inqueue", __queue, callback.name, position]);
+			__queue[position] = {func : callback, argv : argv};
+			debug(["inqueue", callback.name, position]);
 			if(position == 1){
-				//console.log(["run", callback.name, queue.length]);
+				debug(["run", callback.name, queue.length]);
 				callback.apply(null, argv);
 			}
 		}
@@ -85,7 +95,7 @@ var processQueue = (function(){
 		//Take out self
 		//workaround : __queue[0] is not writable
 		var self = __queue.shift() || __queue.shift();
-		//console.log(["unqueue" ,__queue, self.func.name]);
+		debug(["unqueue", self.func.name]);
 		//Get next
 		var process = __queue[0];
 		if(process){
@@ -124,6 +134,9 @@ function onWindowCreated(window){
 						control.updatePage({chromeId : tab.id}, index[i]);
 					});
 				}
+				else{
+					control.createGroup(window, window.id);
+				}
 			}
 			else{
 				control.createGroup(window, window.id);
@@ -152,7 +165,8 @@ function onWindowRemoved(windowId){
 
 function onTabCreated(tab){
 	var groupId = control.getGroupId(tab.windowId);
-	if(isNumber(groupId)){
+	var pageId = control.getPageId(tab.id);
+	if(isNumber(groupId) && !isNumber(pageId)){
 		control.createPage(tab, groupId, tab.id);
 	}
 	processQueue.next();
@@ -232,6 +246,34 @@ var messageHandler = {};
 			//TODO
 		}
 	}
+	
+	messageHandler["open-window"] = function(args){
+		var windowId = control.getWindowId(args.groupId);
+		if(windowId == undefined){
+			var url = control.getGroupUrl(args.groupId);
+			chrome.windows.create({url : url, focused : true});
+		}
+		else{
+			chrome.windows.update(windowId, {focused : true});
+		}
+	}
+	
+	messageHandler["rename-window"] = function(args){
+		control.updateGroup({name : args.name}, args.groupId);
+	}
+	
+	messageHandler["delete-window"] = function(args){
+		var windowId = control.getWindowId(args.groupId);
+		var index = control.getIndex(args.groupId);
+			index.forEach(function(pageId){
+				control.removePage(pageId);
+			});
+		control.removeGroup(args.groupId);
+		if(windowId != undefined){
+			chrome.windows.remove(windowId);
+		}
+	}
+	
 chrome.extension.onMessage.addListener(function(message){
 	if(message.action in messageHandler)
 		messageHandler[message.action](message);
@@ -246,6 +288,7 @@ function getGroups(callback){
 
 function openTab(tab){
 	chrome.browserAction.getPopup({}, function(tab){
+		chrome.tabs.create({url : "popup.html"});
 		console.log(tab);
 		if(!!tab){
 		}

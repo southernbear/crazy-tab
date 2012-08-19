@@ -3,19 +3,22 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Tab Groups</title>
-		<!--<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css"/>-->
+		<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css"/>
 		<link rel="stylesheet" type="text/css" 
 			href="http://fonts.googleapis.com/css?family=Cantarell:400,700" />
 		<link rel="stylesheet" type="text/css" href="style.css"/>
 		<script src="jquery/js/jquery-1.8.0.min.js"></script>
 		<!--<script src="bootstrap/js/bootstrap.js"></script>-->
 		<script src="bootstrap-dropdown.js"></script>
-		<script src="model.js"></script>
+		<script src="bootstrap-modal.js"></script>
+		<script src="view.js"></script>
 		<script src="popup.js"></script>
 		<style id="runtime-style"></style>
 	</head>
 	<body>
 		<ul id="headbar">
+		
+			<!-- Dropdown menu for group names-->
 			<li id="group-menu" class="dropdown">
 				<div class="dropdown-toggle" data-toggle="dropdown">
 					<span id="group-name"></span>
@@ -24,17 +27,29 @@
 				<ul id="group-head" class="dropdown-menu">
 				</ul>
 			</li>
+			
+			<!-- Dropdown menu group actions-->
 			<li class="dropdown pull-right">
 				<div id = "action" class="dropdown-toggle" data-toggle="dropdown">
 					action
 					<b class="caret"></b>
 				</div>
-				<ul class="dropdown-menu">
-					<li><a>Open New in Window</a></li>
+				<ul id="group-action" class="dropdown-menu">
 				</ul>
 			</li>
 		</ul>
+		
+		<!-- Container for groups containing pages-->
 		<div id="group-list"></div>
+		
+		<!-- Container for pages not belonging to any group-->
 		<div id="detached"></div>
+		
+		<!-- Modal for group name-->
+		<form class="modal hide" id="name-modal">
+			<button type="button" class="close" data-dismiss="modal">×</button>
+			<input id="group-name-input" type="text"/>
+			<a id="group-rename-button" href="#" class="btn btn-primary">Rename</a>
+		</form>
 	</body>
 </html>

@@ -4,7 +4,7 @@
   	"manifest_version"	:	 2,
 	"description"		:	"The first extension that I made.",
 	"background"		:	{
-		"scripts"		:	["model.js", "background.js"]
+		"scripts"		:	["control.js", "background.js"]
 	},
 	"browser_action"	:	{
 		"default_icon"	:	"icon.png"

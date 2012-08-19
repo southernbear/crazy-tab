@@ -4,6 +4,7 @@
  // Variables
 ////////////////////////////////////////////////////////////////////////////////
 var WINDOW_ID = -1;
+var GROUP_ID = -1;
 
 
  // Utils
@@ -25,6 +26,12 @@ function $$page(page){
 function $$list(group){
 	var id = !isNaN(parseInt(group)) ? group : group.groupId;
 	return $$("group-" + id);
+}
+
+function clearChildren(node){
+	while (node.hasChildNodes()){
+    	node.removeChild(node.lastChild);
+	}
 }
 
 
@@ -55,70 +62,70 @@ function $$height(element, height){
 
 
 
+ // Action
+////////////////////////////////////////////////////////////////////////////////
+function action(act, args){
+	args = args || {};
+	args["action"] = act;
+	message(args);
+}
+
+function parseAct(name){
+	return name.split(/\s+/).map(function(item){return item.toLowerCase()}).join("-");
+}
+
+function createGroupAction(name, func){
+	var act = parseAct(name);
+	var item = document.createElement("li");
+		item.id = "action-" + act;
+		var link = document.createElement("a");
+			link.textContent = name;
+			link.addEventListener("click", function(event){
+				event.preventDefault();
+				func(function(args){action(act, args);});
+			});
+		item.appendChild(link);
+	return item;
+}
+
+
+function setupActions(){
+	var list = $$("group-action");
+		list.appendChild(createGroupAction("Open Window",
+			function(action){action({groupId : GROUP_ID});}));
+			
+		list.appendChild(createGroupAction("Rename Window",
+			function(action){
+				var titleNode = $$group(GROUP_ID).firstChild;
+				$("#group-name-input").val(titleNode.textContent);
+				$("#name-modal").on("shown", function(){$("#group-name-input").select()});
+				$("#name-modal").modal('show');
+			
+				$("#group-rename-button").click(function(){
+					var newName = $("#group-name-input").val();
+					if(titleNode.textContent != newName){
+						action({groupId : GROUP_ID, name : newName});
+					}
+					$("#name-modal").modal('hide');
+				});
+			}));
+			
+		list.appendChild(createGroupAction("Delete Window",
+			function(action){
+				action({groupId : GROUP_ID});
+				switchGroup($$("group-head").firstChild.dataset["groupid"]);
+			}));
+}
+
+
 
  // Visual Elements
 ////////////////////////////////////////////////////////////////////////////////
 function switchGroup(groupId){
+	GROUP_ID = parseInt(groupId);
 	$$("runtime-style").textContent = 
 		"#group-list .group:not(#group-" + groupId + "){display:none;}";
 	$$("group-name").textContent = $$group(groupId).firstChild.textContent;
-}
-
-
-function sizeAllocate(list){
-	var width  = list.clientWidth;
-	var height = list.clientHeight;
-	var margin = 5;
-	var textH = 24;
-	
-	var mw = 80;
-	var mh = 60;
-	
-	var children = list.getElementsByClassName("page");
-	var len = children.length;
-	
-	var nextC;
-	var shotW;
-	var nextH;
-	var avalR = 1;
-	var currR = 0;
-	
-	while(avalR > currR){
-		currR++;
-		nextC = Math.ceil(len / currR);
-		shotW = Math.floor(width / nextC) - margin * 2;
-		nextH = Math.floor(shotW / 16 * 9) + textH + margin * 2;
-		nextH = Math.min(nextH, Math.floor(height / currR));
-		avalR = Math.floor(height / nextH);
-	}
-	var shotH = nextH - textH - margin  * 2;
-		shotW = Math.floor(shotH / 9 * 16);
-		shotH = Math.floor(shotW / 16 * 9);
-		nextH = shotH + textH;
-	
-	var trueW = shotW;
-	var trueH = nextH;
-	var marginX = Math.floor((Math.floor($$width(list.parentNode)  / nextC) - trueW) / 2);
-	var marginY = Math.floor((Math.floor($$height(list.parentNode) / currR) - trueH) / 2);
-		
-	for(var i = 0; i < len; i++){
-		var child = children[i];
-		var style = child.style;
-		if(style){
-			style.width = trueW + "px";
-			style.height = trueH + "px";
-			
-			style.margin = marginY + "px " + marginX + "px";
-			
-			child.firstChild.style.width = shotW + "px";
-			child.firstChild.style.height = shotH + "px";
-		}
-	}
-}
-
-
-function activatePage(pageId){
-	message({action : "activate-page", pageId : pageId});
 }
 
 
@@ -126,15 +133,15 @@ function createPageElement(page){
 	var item = document.createElement("li");
 		item.id = "page-" + page.pageId;
 		item.classList.add("page");
+		item.dataset["pageid"] = page.pageId;
+		item.dataset["tabid"] = page.chromeId;
 		var link = document.createElement("a");
 			link.classList.add("title");
 			link.textContent = page.title;
 			link.href = page.url;
-			link.dataset["tabid"] = page.chromeId;
-			link.dataset["pageid"] = page.pageId;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
-				activatePage(page.pageId);
+				action("activate-page", {pageId : page.pageId});
 			});
 		item.appendChild(link);
 	return item;
@@ -144,9 +151,9 @@ function createGroupHeadElement(group){
 	var gitem = document.createElement("li");
 		gitem.id = "group-head-" + group.groupId;
 		gitem.classList.add("group-head");
+		gitem.dataset["groupid"] = group.groupId;
+		gitem.dataset["windowid"] = group.chromeId;
 		var link = document.createElement("a");
-			link.dataset["windowid"] = group.chromeId;
-			link.dataset["groupid"] = group.groupId;
 			link.textContent = group.name || "Window " + group.groupId;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
@@ -184,7 +191,10 @@ function removeGroup(group){
 
 function updateGroup(group){
 	var item = $$group(group);
-	//TODO
+	item.firstChild.textContent = group.name;
+	if(group.groupId == GROUP_ID){
+		$$("group-name").textContent = group.name;
+	}
 }
 
 function createPage(page){
@@ -229,6 +239,9 @@ function movePage(pageId, groupId, index){
 
 
 function init(){
+	clearChildren($$("group-head"));
+	clearChildren($$("group-list"));
+
 	chrome.windows.getCurrent({}, function(window){
 		WINDOW_ID = window.id;
 	
@@ -243,9 +256,10 @@ function init(){
 			"page-detach"  : detachPage,
 			"page-move"    : movePage
 		};
-		var model = new Model(handler);
+		var view = new View(handler);
 	});
+	
+	setupActions();
 }
 
 window.addEventListener("load", init);
-
