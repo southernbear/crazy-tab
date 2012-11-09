@@ -7,9 +7,10 @@
 	cursor:default;
 }
 
- /* Modified From bootstrap
-/******************************************************************************/
-
+/*
+ * Modified From bootstrap
+ */
+ 
 .caret{
 	border-top: 4px solid;
 	border-left:4px solid transparent;
@@ -49,8 +50,9 @@
 }
 
 
- /* Custom
-/******************************************************************************/
+/*
+ * Custom
+ */
 
 html{	
 	width:305px;
