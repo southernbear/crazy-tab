@@ -112,6 +112,17 @@ function Control(){
 	function clear(){
 		chrome.storage.local.clear();
 	}
+	
+
+/*
+ * Storage keys
+ */
+
+var KEY = {
+	group : function(groupId){ return "group:" + groupId; },
+	index : function(groupId){ return "index:" + groupId; },
+	page  : function(pageId) { return "page:"  + pageId; }
+}
 
 
  // Control
@@ -120,29 +131,29 @@ function Control(){
 		var groupId = getNewGroupId();
 		var group = new Group(info, groupId, chromeId);
 	
-		save("group:" + groupId, group);
-		save("index:" + groupId, []);
+		save(KEY.group(groupId), group);
+		save(KEY.index(groupId), []);
 	}
 
 	function removeGroup(groupId){
 		delete mapWin[GROUPS[groupId].chromeId];
 		delete GROUPS[groupId];
 		delete INDEXES[groupId];
-		remove("group:" + groupId);
-		remove("index:" + groupId);
+		remove(KEY.group(groupId));
+		remove(KEY.index(groupId));
 	}
 	
 	function updateGroup(info, groupId){
 		GROUPS[groupId].update(info);
-		save("group:" + groupId, GROUPS[groupId]);
+		save(KEY.group(groupId), GROUPS[groupId]);
 	}
 	
 	function createPage(info, groupId, chromeId){
 		var pageId = getNewPageId();
 		var page = new Page(info, pageId, groupId, chromeId);
 		INDEXES[groupId].splice(info.index, 0, pageId);
-		save("page:" + pageId, page);
-		save("index:" + groupId, INDEXES[groupId]);
+		save(KEY.page(pageId), page);
+		save(KEY.index(groupId), INDEXES[groupId]);
 	}
 	
 	function removePage(pageId){
@@ -151,34 +162,34 @@ function Control(){
 			index.splice(index.indexOf(pageId), 1);
 		delete mapPage[PAGES[pageId].chromeId];
 		delete PAGES[pageId];
-		save("index:" + groupId, index);
-		remove("page:" + pageId);
+		save(KEY.index(groupId), index);
+		remove(KEY.page(pageId));
 	}
 	
 	function updatePage(info, pageId){
 		PAGES[pageId].update(info);
-		save("page:" + pageId, PAGES[pageId]);
+		save(KEY.page(pageId), PAGES[pageId]);
 	}
 
 	function attachPage(pageId, groupId, index){
 		PAGES[pageId].groupId = parseInt(groupId);
 		INDEXES[groupId].splice(index, 0, pageId);
-		save("page:" + pageId, PAGES[pageId]);
-		save("index:" + groupId, INDEXES[groupId]);
+		save(KEY.page(pageId), PAGES[pageId]);
+		save(KEY.index(groupId), INDEXES[groupId]);
 	}
 	
 	function detachPage(pageId, groupId, index){
 		delete PAGES[pageId].groupId;
 		INDEXES[groupId].splice(index, 1);
-		save("page:" + pageId, PAGES[pageId]);
-		save("index:" + groupId, INDEXES[groupId]);
+		save(KEY.page(pageId), PAGES[pageId]);
+		save(KEY.index(groupId), INDEXES[groupId]);
 	}
 	
 	function movePage(pageId, groupId, from, to){
 		var index = INDEXES[groupId];
 			index.splice(from, 1);
 			index.splice(to, 0, pageId);
-		save("index:" + groupId, index);
+		save(KEY.index(groupId), index);
 	}
 	
 	function getGroupId(id){
