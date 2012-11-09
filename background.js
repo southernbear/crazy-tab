@@ -236,7 +236,7 @@ chrome.tabs.onMoved.addListener(processQueue.queue(onTabMoved));
 var messageHandler = {};
 	messageHandler["activate-page"] = function(args){
 		var tabId = control.getTabId(args.pageId);
-		if(tabId !== undefined){
+		if(tabId != undefined){
 			chrome.tabs.update(tabId, {active : true});
 			chrome.tabs.get(tabId, function(tab){
 				chrome.windows.update(tab.windowId, {focused : true});

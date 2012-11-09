@@ -260,6 +260,7 @@ function init(){
 	});
 	
 	setupActions();
+	
 }
 
 window.addEventListener("load", init);

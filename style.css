@@ -19,7 +19,7 @@
 }
 
 .dropdown .caret{
-	margin-top:0;
+	margin:0 2px;
 }
 
 .open .caret{
@@ -162,6 +162,22 @@ a:hover{
 #group-menu:hover{
 	color:#005580;
 }
+
+#group-menu > .dropdown-toggle{
+	display:-webkit-flex;
+}
+
+#group-menu > .dropdown-toggle .caret{
+	margin-top:25px;
+}
+
+#group-name{
+	display:block;
+	
+	overflow:hidden;
+	white-space:nowrap;
+	text-overflow:ellipsis;
+}
 	
 #action{
 	-webkit-box-flex: 0;
@@ -222,4 +238,8 @@ a:hover{
 	display:block;
 	float:left;
 	min-width:48px;
+}
+
+#detached{
+	display:none;
 }
