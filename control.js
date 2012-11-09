@@ -336,13 +336,13 @@ var KEY = {
 		//Refresh database
 		var data = {};
 		GROUPS.forEach(function(group){
-			data["group:" + group.groupId] = group;
+			data[KEY.group(group.groupId)] = group;
 		});
 		PAGES.forEach(function(page){
-			data["page:" + page.pageId] = page;
+			data[KEY.page(page.pageId)] = page;
 		});
 		INDEXES.forEach(function(index, i){
-			data["index:" + i] = index;
+			data[KEY.index(i)] = index;
 		});
 		chrome.storage.local.set(data);
 		
