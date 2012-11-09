@@ -83,7 +83,7 @@ li{
 	list-style:none;
 }
 
-li > a{
+li > a, .group-head{
 	display:block;
 	box-sizing:border-box;
 
@@ -156,7 +156,7 @@ a:hover{
 	
 	line-height:54px;
 	
-	color:#08c;
+	color:black;
 	font-size:24px;
 	font-weight:bold;
 }
@@ -201,6 +201,38 @@ a:hover{
 .group{
 	margin:0;
 	padding:0;
+}
+
+.group-head{
+	height:54px;
+	line-height:54px;
+	
+	color:#08c;
+	font-size:24px;
+	font-weight:bold;
+}
+
+.group.current .group-head:before{
+	content:"★";
+	
+	display:inline-block;
+	
+	margin:0 0 0 -25px;
+	width:25px;
+	
+	text-align:center;
+	vertical-align:middle;
+	font-size:12px;
+	
+}
+
+.group-head:hover, .group.current .group-head:hover:before{
+	color:white;
+	background-color:#4A90D9;
+}
+
+.group:not(.open) .group-page-list, .group:not(.open) .group-page-list{
+	display:none;
 }
 
 

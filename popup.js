@@ -15,17 +15,22 @@ function $$(id){
 
 function $$group(group){
 	var id = !isNaN(parseInt(group)) ? group : group.groupId;
+	return $$("group-" + id);
+}
+
+function $$head(group){
+	var id = !isNaN(parseInt(group)) ? group : group.groupId;
 	return $$("group-head-" + id);
+}
+
+function $$list(group){
+	var id = !isNaN(parseInt(group)) ? group : group.groupId;
+	return $$("group-page-list-" + id);
 }
 
 function $$page(page){
 	var id = !isNaN(parseInt(page)) ? page : page.pageId;
 	return $$("page-" + id);
-}
-
-function $$list(group){
-	var id = !isNaN(parseInt(group)) ? group : group.groupId;
-	return $$("group-" + id);
 }
 
 function clearChildren(node){
@@ -123,9 +128,8 @@ function setupActions(){
 ////////////////////////////////////////////////////////////////////////////////
 function switchGroup(groupId){
 	GROUP_ID = parseInt(groupId);
-	$$("runtime-style").textContent = 
-		"#group-list .group:not(#group-" + groupId + "){display:none;}";
-	$$("group-name").textContent = $$group(groupId).firstChild.textContent;
+	$$group(groupId).classList.add("current");
+	$$group(groupId).classList.add("open");
 }
 
 
@@ -147,35 +151,37 @@ function createPageElement(page){
 	return item;
 }
 
-function createGroupHeadElement(group){
-	var gitem = document.createElement("li");
-		gitem.id = "group-head-" + group.groupId;
-		gitem.classList.add("group-head");
-		gitem.dataset["groupid"] = group.groupId;
-		gitem.dataset["windowid"] = group.chromeId;
-		var link = document.createElement("a");
-			link.textContent = group.name || "Window " + group.groupId;
-			link.addEventListener("click", function(event){
-				event.preventDefault();
-				switchGroup(group.groupId);
-			});
-		gitem.appendChild(link);
-	return gitem;
-}
-
 function createGroupElement(group){
-	var gitem = document.createElement("ul");
+	var li = document.createElement("li");
+
+	var gitem = document.createElement("div");
 		gitem.id = "group-" + group.groupId;
 		gitem.classList.add("group");
-	return gitem;
+		
+		var ghead = document.createElement("header");
+			ghead.id = "group-head-" + group.groupId;
+			ghead.classList.add("group-head");
+			ghead.textContent = group.name;
+			ghead.addEventListener("click", function(event){
+				event.preventDefault();
+				gitem.classList.toggle("open");
+			});
+			
+		var glist = document.createElement("ul");
+			glist.id = "group-page-list-" + group.groupId;
+			glist.classList.add("group-page-list");
+			
+		gitem.appendChild(ghead);
+		gitem.appendChild(glist);
+		
+		li.appendChild(gitem);
+	return li;
 }
 
 
  //  Handlers
 ////////////////////////////////////////////////////////////////////////////////
 function createGroup(group){
-	var head = createGroupHeadElement(group);
-	$$("group-head").appendChild(head);
 	var list = createGroupElement(group);
 	$$("group-list").appendChild(list);
 	
@@ -239,7 +245,6 @@ function movePage(pageId, groupId, index){
 
 
 function init(){
-	clearChildren($$("group-head"));
 	clearChildren($$("group-list"));
 
 	chrome.windows.getCurrent({}, function(window){
@@ -258,9 +263,6 @@ function init(){
 		};
 		var view = new View(handler);
 	});
-	
-	setupActions();
-	
 }
 
 window.addEventListener("load", init);
