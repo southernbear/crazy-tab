@@ -79,11 +79,10 @@ function parseAct(name){
 	return name.split(/\s+/).map(function(item){return item.toLowerCase()}).join("-");
 }
 
-function createGroupAction(name, func){
-	var act = parseAct(name);
+function createGroupAction(name, act, func){
 	var item = document.createElement("li");
 		item.id = "action-" + act;
-		var link = document.createElement("a");
+		var link = document.createElement("button");
 			link.textContent = name;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
@@ -96,40 +95,50 @@ function createGroupAction(name, func){
 
 function setupActions(){
 	var list = $$("group-action");
-		list.appendChild(createGroupAction("Open Window",
+		list.appendChild(createGroupAction("Open", "open-window",
 			function(action){action({groupId : GROUP_ID});}));
 			
-		list.appendChild(createGroupAction("Rename Window",
+		list.appendChild(createGroupAction("Rename", "rename-window",
 			function(action){
-				var titleNode = $$group(GROUP_ID).firstChild;
-				$("#group-name-input").val(titleNode.textContent);
-				$("#name-modal").on("shown", function(){$("#group-name-input").select()});
-				$("#name-modal").modal('show');
+				var titleNode = $$head(GROUP_ID);
+				if(titleNode){
+					$("#group-name-input").val(titleNode.textContent);
+					$("#name-modal").on("shown", function(){$("#group-name-input").select()});
+					$("#name-modal").modal('show');
 			
-				$("#group-rename-button").click(function(){
-					var newName = $("#group-name-input").val();
-					if(titleNode.textContent != newName){
-						action({groupId : GROUP_ID, name : newName});
-					}
-					$("#name-modal").modal('hide');
-				});
+					$("#group-rename-button").click(function(){
+						var newName = $("#group-name-input").val();
+						if(titleNode.textContent != newName){
+							console.log(newName);
+							action({groupId : GROUP_ID, name : newName});
+						}
+						$("#name-modal").modal('hide');
+					});
+				}
 			}));
 			
-		list.appendChild(createGroupAction("Delete Window",
+		list.appendChild(createGroupAction("Delete", "delete-window",
 			function(action){
 				action({groupId : GROUP_ID});
-				switchGroup($$("group-head").firstChild.dataset["groupid"]);
+				GROUP_ID = -1;
 			}));
 }
-
 
 
  // Visual Elements
 ////////////////////////////////////////////////////////////////////////////////
 function switchGroup(groupId){
-	GROUP_ID = parseInt(groupId);
-	$$group(groupId).classList.add("current");
-	$$group(groupId).classList.add("open");
+	var prev = $$group(GROUP_ID)
+	if(prev)
+		prev.classList.remove("selected");
+		
+	if(GROUP_ID != groupId){
+		GROUP_ID = parseInt(groupId);
+		$$group(groupId).classList.add("selected");
+	}
+	else{
+		GROUP_ID = -1;
+	}
 }
 
 
@@ -165,6 +174,7 @@ function createGroupElement(group){
 			ghead.addEventListener("click", function(event){
 				event.preventDefault();
 				gitem.classList.toggle("open");
+				switchGroup(group.groupId);
 			});
 			
 		var glist = document.createElement("ul");
@@ -196,11 +206,8 @@ function removeGroup(group){
 }
 
 function updateGroup(group){
-	var item = $$group(group);
-	item.firstChild.textContent = group.name;
-	if(group.groupId == GROUP_ID){
-		$$("group-name").textContent = group.name;
-	}
+	var item = $$head(group);
+	item.textContent = group.name;
 }
 
 function createPage(page){
@@ -263,6 +270,8 @@ function init(){
 		};
 		var view = new View(handler);
 	});
+	
+	setupActions();
 }
 
 window.addEventListener("load", init);
