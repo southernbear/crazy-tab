@@ -109,7 +109,7 @@ li:hover > a{
 	background-color:#4a90d9;
 }
 
-li > a:focus{
+.page > a:focus, .group-head > a:focus{
 	outline:1px solid #4a90d9;
 	border:1px dashed white;
 
@@ -207,7 +207,7 @@ a:hover{
 	height:54px;
 	line-height:54px;
 	
-	color:#3FDBA8;
+	color:hsl(91, 65%, 46%);
 	font-size:24px;
 	font-weight:bold;
 }
@@ -228,7 +228,7 @@ a:hover{
 
 .group.selected .group-head{
 	color:white;
-	background-color:#3FDBA8;
+	background-color:#8FD94A;
 }
 
 .group-head:hover, .group.current .group-head:hover:before, .group.selected .group-head:hover{
@@ -288,7 +288,7 @@ a:hover{
 	
 	margin:0;
 	
-	border-top:1px solid #ccc;
+	border-top:1px solid #eee;
 }
 
 .control li{

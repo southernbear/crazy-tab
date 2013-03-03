@@ -167,21 +167,24 @@ function createGroupElement(group){
 		gitem.id = "group-" + group.groupId;
 		gitem.classList.add("group");
 		
-		var ghead = document.createElement("header");
+		var header = document.createElement("header");
+		var ghead = document.createElement("a");
 			ghead.id = "group-head-" + group.groupId;
 			ghead.classList.add("group-head");
 			ghead.textContent = group.name;
+			ghead.href = "#group-page-list-" + group.groupId;
 			ghead.addEventListener("click", function(event){
 				event.preventDefault();
 				gitem.classList.toggle("open");
 				switchGroup(group.groupId);
 			});
+			header.appendChild(ghead);
 			
 		var glist = document.createElement("ul");
 			glist.id = "group-page-list-" + group.groupId;
 			glist.classList.add("group-page-list");
 			
-		gitem.appendChild(ghead);
+		gitem.appendChild(header);
 		gitem.appendChild(glist);
 		
 		li.appendChild(gitem);
