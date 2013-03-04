@@ -192,10 +192,6 @@ function createGroupElement(group){
 function createGroup(group){
 	var list = createGroupElement(group);
 	$$("group-list").appendChild(list);
-	
-	if(group.chromeId === WINDOW_ID){
-		switchGroup(group.groupId);
-	}
 }
 
 function removeGroup(group){
@@ -261,25 +257,21 @@ function init(){
 	clearChildren($$("group-list"));
 
 	chrome.runtime.getBackgroundPage(function(backgroundPage){
-		chrome.windows.getCurrent({}, function(window){
-			WINDOW_ID = window.id;
-			
-			load(backgroundPage.control);
+		load(backgroundPage.control);
+
+		var handler = {
+			"group-create" : createGroup,
+			"group-remove" : removeGroup,
+			"group-update" : updateGroup,
+			"page-create"  : createPage,
+			"page-remove"  : removePage,
+			"page-update"  : updatePage,
+			"page-attach"  : attachPage,
+			"page-detach"  : detachPage,
+			"page-move"    : movePage
+		};
 	
-			var handler = {
-				"group-create" : createGroup,
-				"group-remove" : removeGroup,
-				"group-update" : updateGroup,
-				"page-create"  : createPage,
-				"page-remove"  : removePage,
-				"page-update"  : updatePage,
-				"page-attach"  : attachPage,
-				"page-detach"  : detachPage,
-				"page-move"    : movePage
-			};
-		
-			messageBus = new MessageBus(handler);
-		});
+		messageBus = new MessageBus(handler);
 	});
 	
 	setupActions();
