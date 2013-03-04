@@ -234,8 +234,8 @@ chrome.tabs.onMoved.addListener(processQueue.queue(onTabMoved));
  //  Message
 ////////////////////////////////////////////////////////////////////////////////
 var messageHandler = {};
-	messageHandler["activate-page"] = function(args){
-		var tabId = control.getTabId(args.pageId);
+	messageHandler["activate-page"] = function(pageId){
+		var tabId = control.getTabId(pageId);
 		if(tabId != undefined){
 			chrome.tabs.update(tabId, {active : true});
 			chrome.tabs.get(tabId, function(tab){
@@ -247,10 +247,10 @@ var messageHandler = {};
 		}
 	}
 	
-	messageHandler["open-window"] = function(args){
-		var windowId = control.getWindowId(args.groupId);
+	messageHandler["open-window"] = function(groupId){
+		var windowId = control.getWindowId(groupId);
 		if(windowId == undefined){
-			var url = control.getGroupUrl(args.groupId);
+			var url = control.getGroupUrl(groupId);
 			chrome.windows.create({url : url, focused : true});
 		}
 		else{
@@ -258,27 +258,23 @@ var messageHandler = {};
 		}
 	}
 	
-	messageHandler["rename-window"] = function(args){
-		control.updateGroup({name : args.name}, args.groupId);
+	messageHandler["rename-window"] = function(name, groupId){
+		control.updateGroup({name : name}, groupId);
 	}
 	
-	messageHandler["delete-window"] = function(args){
-		var windowId = control.getWindowId(args.groupId);
-		var index = control.getIndex(args.groupId);
+	messageHandler["delete-window"] = function(groupId){
+		var windowId = control.getWindowId(groupId);
+		var index = control.getIndex(groupId);
 			index.forEach(function(pageId){
 				control.removePage(pageId);
 			});
-		control.removeGroup(args.groupId);
+		control.removeGroup(groupId);
 		if(windowId != undefined){
 			chrome.windows.remove(windowId);
 		}
 	}
-	
-chrome.extension.onMessage.addListener(function(message){
-	if(message.action in messageHandler)
-		messageHandler[message.action](message);
-});
 
+var messageBus = new MessageBus(messageHandler);
 
  //  Setup Browser Action
 ////////////////////////////////////////////////////////////////////////////////

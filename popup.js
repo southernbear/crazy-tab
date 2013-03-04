@@ -87,7 +87,11 @@ function createGroupAction(name, act, func){
 			link.textContent = name;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
-				func(function(args){action(act, args);});
+				func(function(){
+					var argv = Array.prototype.slice.call(arguments);
+					argv.unshift(act);
+					messageBus.send.apply(null, argv);
+				});
 			});
 		item.appendChild(link);
 	return item;
@@ -97,7 +101,7 @@ function createGroupAction(name, act, func){
 function setupActions(){
 	var list = $$("group-action");
 		list.appendChild(createGroupAction("Open", "open-window",
-			function(action){action({groupId : GROUP_ID});}));
+			function(action){action(GROUP_ID);}));
 			
 		list.appendChild(createGroupAction("Rename", "rename-window",
 			function(action){
@@ -111,7 +115,7 @@ function setupActions(){
 						var newName = $("#group-name-input").val();
 						if(titleNode.textContent != newName){
 							console.log(newName);
-							action({groupId : GROUP_ID, name : newName});
+							action(newName, GROUP_ID);
 						}
 						$("#name-modal").modal('hide');
 					});
@@ -120,7 +124,7 @@ function setupActions(){
 			
 		list.appendChild(createGroupAction("Delete", "delete-window",
 			function(action){
-				action({groupId : GROUP_ID});
+				action(GROUP_ID);
 				GROUP_ID = -1;
 			}));
 }
