@@ -406,7 +406,6 @@ var KEY = {
 	
 	function syncDatabase(local){
 		chrome.storage.sync.get(function(sync){
-			console.log(sync);
 			var lastSyncOnline = sync.lastSync || 0;
 			var lastSyncLocal  = local.lastSync || 0;
 		

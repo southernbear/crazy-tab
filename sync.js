@@ -70,7 +70,7 @@ var Sync = function() {
 			delete setData[key];
 		}
 		
-		chrome.storage.local.remove(object);
+		chrome.storage.local.remove(key);
 		sync();
 	};
 	
