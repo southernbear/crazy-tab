@@ -4,7 +4,7 @@
   	"manifest_version"	:	 2,
 	"description"		:	"The first extension that I made.",
 	"background"		:	{
-		"scripts"		:	["messagebus.js", "control.js", "event-monitor.js"]
+		"scripts"		:	["messagebus.js", "sync.js", "control.js", "event-monitor.js"]
 	},
 	"browser_action"	:	{
 		"default_icon"	:	"icon.png"

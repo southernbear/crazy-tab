@@ -18,6 +18,8 @@ function Control(){
 	var execQueue = [];
 	
 	var messageBus = new MessageBus();
+	
+	var sync = new Sync();
 
 
  // Classes
@@ -100,7 +102,7 @@ function Control(){
 	function save(key, item){
 		var object = {};
 			object[key] = item;
-		chrome.storage.local.set(object);
+		sync.set(object);
 	}
 	
 	function load(key, callback){
@@ -108,11 +110,11 @@ function Control(){
 	}
 	
 	function remove(key){
-		chrome.storage.local.remove(key);
+		sync.remove(key);
 	}
 	
 	function clear(){
-		chrome.storage.local.clear();
+		chrome.storage.load.clear();
 	}
 	
 
@@ -374,7 +376,7 @@ var KEY = {
 		INDEXES.forEach(function(index, i){
 			data[KEY.index(i)] = index;
 		});
-		chrome.storage.local.set(data);
+		sync.set(data);
 		
 		
 		execQueue.shift()();	
@@ -402,11 +404,29 @@ var KEY = {
 		execQueue.shift()();
 	}
 	
-
+	function syncDatabase(local){
+		chrome.storage.sync.get(function(sync){
+			console.log(sync);
+			var lastSyncOnline = sync.lastSync || 0;
+			var lastSyncLocal  = local.lastSync || 0;
+		
+			if (lastSyncOnline > lastSyncLocal) {
+				chrome.storage.local.clear();
+				chrome.storage.local.set(sync);
+			}
+			else if (lastSyncOnline < lastSyncLocal) {
+				chrome.storage.sync.clear();
+				chrome.storage.sync.set(local);
+			}
+		
+			execQueue.shift()();
+		});
+	}
 
 
  //Init
 ////////////////////////////////////////////////////////////////////////////////
+	execQueue.push(function(){load(null, syncDatabase)});
 	execQueue.push(function(){load(null, loadDatabase)});
 	execQueue.push(function(){chrome.windows.getAll({populate : true}, mapChromeWindows)});
 	execQueue.push(function(){});
