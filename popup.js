@@ -6,6 +6,7 @@
 var WINDOW_ID = -1;
 var GROUP_ID = -1;
 
+var messageBus;
 
  // Utils
 ////////////////////////////////////////////////////////////////////////////////
@@ -252,26 +253,39 @@ function movePage(pageId, groupId, index){
 
  //Init
 ////////////////////////////////////////////////////////////////////////////////
-
+function load(control){
+	control.getGroups().forEach(function(group){
+		createGroup(group);
+		control.getIndex(group.groupId).forEach(function(pageId, list, index){
+			createPage(control.getPage(pageId));
+			attachPage(pageId, group.groupId, index);
+		});
+	});
+}
 
 function init(){
 	clearChildren($$("group-list"));
 
-	chrome.windows.getCurrent({}, function(window){
-		WINDOW_ID = window.id;
+	chrome.runtime.getBackgroundPage(function(backgroundPage){
+		chrome.windows.getCurrent({}, function(window){
+			WINDOW_ID = window.id;
+			
+			load(backgroundPage.control);
 	
-		var handler = {
-			"group-create" : createGroup,
-			"group-remove" : removeGroup,
-			"group-update" : updateGroup,
-			"page-create"  : createPage,
-			"page-remove"  : removePage,
-			"page-update"  : updatePage,
-			"page-attach"  : attachPage,
-			"page-detach"  : detachPage,
-			"page-move"    : movePage
-		};
-		var view = new View(handler);
+			var handler = {
+				"group-create" : createGroup,
+				"group-remove" : removeGroup,
+				"group-update" : updateGroup,
+				"page-create"  : createPage,
+				"page-remove"  : removePage,
+				"page-update"  : updatePage,
+				"page-attach"  : attachPage,
+				"page-detach"  : detachPage,
+				"page-move"    : movePage
+			};
+		
+			messageBus = new MessageBus(handler);
+		});
 	});
 	
 	setupActions();

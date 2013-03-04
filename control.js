@@ -16,6 +16,8 @@ function Control(){
 	
 	//
 	var execQueue = [];
+	
+	var messageBus = new MessageBus();
 
 
  // Classes
@@ -133,6 +135,8 @@ var KEY = {
 	
 		save(KEY.group(groupId), group);
 		save(KEY.index(groupId), []);
+		
+		messageBus.send("group-create", group);
 	}
 
 	function removeGroup(groupId){
@@ -141,11 +145,15 @@ var KEY = {
 		delete INDEXES[groupId];
 		remove(KEY.group(groupId));
 		remove(KEY.index(groupId));
+		
+		messageBus.send("group-remove", groupId);
 	}
 	
 	function updateGroup(info, groupId){
 		GROUPS[groupId].update(info);
 		save(KEY.group(groupId), GROUPS[groupId]);
+		
+		messageBus.send("group-update", GROUPS[groupId]);
 	}
 	
 	function createPage(info, groupId, chromeId){
@@ -154,6 +162,8 @@ var KEY = {
 		INDEXES[groupId].splice(info.index, 0, pageId);
 		save(KEY.page(pageId), page);
 		save(KEY.index(groupId), INDEXES[groupId]);
+		
+		messageBus.send("page-create", page);
 	}
 	
 	function removePage(pageId){
@@ -164,11 +174,15 @@ var KEY = {
 		delete PAGES[pageId];
 		save(KEY.index(groupId), index);
 		remove(KEY.page(pageId));
+		
+		messageBus.send("page-remove", pageId);
 	}
 	
 	function updatePage(info, pageId){
 		PAGES[pageId].update(info);
 		save(KEY.page(pageId), PAGES[pageId]);
+		
+		messageBus.send("page-update", PAGES[pageId]);
 	}
 
 	function attachPage(pageId, groupId, index){
@@ -176,6 +190,8 @@ var KEY = {
 		INDEXES[groupId].splice(index, 0, pageId);
 		save(KEY.page(pageId), PAGES[pageId]);
 		save(KEY.index(groupId), INDEXES[groupId]);
+		
+		messageBus.send("page-attach", pageId, groupId, index);
 	}
 	
 	function detachPage(pageId, groupId, index){
@@ -183,6 +199,8 @@ var KEY = {
 		INDEXES[groupId].splice(index, 1);
 		save(KEY.page(pageId), PAGES[pageId]);
 		save(KEY.index(groupId), INDEXES[groupId]);
+		
+		messageBus.send("page-detach", pageId);
 	}
 	
 	function movePage(pageId, groupId, from, to){
@@ -190,6 +208,8 @@ var KEY = {
 			index.splice(from, 1);
 			index.splice(to, 0, pageId);
 		save(KEY.index(groupId), index);
+		
+		messageBus.send("page-move", pageId, groupId, to);
 	}
 	
 	function getGroupId(id){
@@ -268,7 +288,17 @@ var KEY = {
 		}
 		return null;
 	}
-
+	
+	function getGroups(){
+		return GROUPS;
+	}
+	
+	function getPage(pageId){
+		return PAGES[pageId];
+	}
+	
+	this.getGroups   = getGroups;
+	this.getPage     = getPage;
 	this.getGroupId	 = getGroupId;
 	this.getGroupUrl = getGroupUrl;
 	this.getPageId   = getPageId;
