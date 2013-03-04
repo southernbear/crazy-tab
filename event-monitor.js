@@ -234,19 +234,6 @@ chrome.tabs.onMoved.addListener(processQueue.queue(onTabMoved));
  //  Message
 ////////////////////////////////////////////////////////////////////////////////
 var messageHandler = {};
-	messageHandler["activate-page"] = function(pageId){
-		var tabId = control.getTabId(pageId);
-		if(tabId != undefined){
-			chrome.tabs.update(tabId, {active : true});
-			chrome.tabs.get(tabId, function(tab){
-				chrome.windows.update(tab.windowId, {focused : true});
-			});
-		}
-		else{
-			//TODO
-		}
-	}
-	
 	messageHandler["open-window"] = function(groupId){
 		var windowId = control.getWindowId(groupId);
 		if(windowId == undefined){

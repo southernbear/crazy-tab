@@ -70,16 +70,6 @@ function $$height(element, height){
 
  // Action
 ////////////////////////////////////////////////////////////////////////////////
-function action(act, args){
-	args = args || {};
-	args["action"] = act;
-	message(args);
-}
-
-function parseAct(name){
-	return name.split(/\s+/).map(function(item){return item.toLowerCase()}).join("-");
-}
-
 function createGroupAction(name, act, func){
 	var item = document.createElement("li");
 		item.id = "action-" + act;
