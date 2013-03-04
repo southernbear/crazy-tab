@@ -87,7 +87,8 @@ li > a, .group-head{
 	display:block;
 	box-sizing:border-box;
 
-	padding:0 2px 0 25px;
+	border:1px solid transparent;
+	padding:0px 2px 0px 25px;
 	height:32px;
 	
 	background-color:white;
@@ -109,7 +110,7 @@ li:hover > a{
 	background-color:#4a90d9;
 }
 
-.page > a:focus, .group-head > a:focus{
+.page > a:focus, .group-head:focus{
 	outline:1px solid #4a90d9;
 	border:1px dashed white;
 
@@ -226,7 +227,7 @@ a:hover{
 	
 }
 
-.group.selected .group-head{
+.group.selected .group-head:not(:focus){
 	color:white;
 	background-color:#8FD94A;
 }
@@ -299,18 +300,15 @@ a:hover{
 
 .control button{
 	width:100%;
-	height:63px;
+	height:61px;
 	
-	border:0;
+	border:1px solid transparent;
 	color: gray;
 	background:transparent;
 	
 	font-weight:bold;
 	
 	cursor:not-allowed;
-}
-
-.control button:hover{
 }
 
 .control.enable button{
@@ -322,4 +320,12 @@ a:hover{
 .control.enable button:hover{
 	color:white;
 	background: #FF8649;
+}
+
+.control.enable button:focus{
+	color:white;
+	background: #FF8649;
+	
+	outline:1px solid #FF8649;
+	border:1px dashed white;
 }

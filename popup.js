@@ -73,11 +73,14 @@ function $$height(element, height){
 function createGroupAction(name, act, func){
 	var item = document.createElement("li");
 		item.id = "action-" + act;
+		item.classList.add('action');
 		var link = document.createElement("button");
 			link.textContent = name;
+			link.classList.add('action-button');
+			link.disabled = true;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
-				if (GROUP_ID > 0) {
+				if (GROUP_ID >= 0) {
 					func(function(){
 						var argv = Array.prototype.slice.call(arguments);
 						argv.unshift(act);
@@ -101,16 +104,19 @@ function setupActions(){
 				if(titleNode){
 					$("#group-name-input").val(titleNode.textContent);
 					$("#name-modal").on("shown", function(){$("#group-name-input").select()});
-					$("#name-modal").modal('show');
-			
-					$("#group-rename-button").click(function(){
+					
+					var rename = function(event){
+						event.preventDefault();
 						var newName = $("#group-name-input").val();
 						if(titleNode.textContent != newName){
 							console.log(newName);
 							action(newName, GROUP_ID);
 						}
 						$("#name-modal").modal('hide');
-					});
+					}
+					
+					$("#name-modal").bind('submit', rename);
+					$("#name-modal").modal('show');
 				}
 			}));
 			
@@ -128,15 +134,17 @@ function switchGroup(groupId){
 	var prev = $$group(GROUP_ID)
 	if(prev)
 		prev.classList.remove("selected");
-		
+	
 	if(GROUP_ID != groupId){
 		GROUP_ID = parseInt(groupId);
 		$$group(groupId).classList.add("selected");
 		$$("group-action").classList.add('enable');
+		$('.action-button').removeAttr('disabled');
 	}
 	else{
 		GROUP_ID = -1;
 		$$("group-action").classList.remove('enable');
+		$('.action-button').attr('disabled', 'true');
 	}
 }
 
