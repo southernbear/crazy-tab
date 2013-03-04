@@ -302,13 +302,24 @@ a:hover{
 	height:63px;
 	
 	border:0;
-	color: #FF8649;
+	color: gray;
 	background:transparent;
 	
 	font-weight:bold;
+	
+	cursor:not-allowed;
 }
 
 .control button:hover{
+}
+
+.control.enable button{
+	color: #FF8649;
+	
+	cursor:pointer;
+}
+
+.control.enable button:hover{
 	color:white;
 	background: #FF8649;
 }

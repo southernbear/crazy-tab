@@ -77,11 +77,13 @@ function createGroupAction(name, act, func){
 			link.textContent = name;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
-				func(function(){
-					var argv = Array.prototype.slice.call(arguments);
-					argv.unshift(act);
-					messageBus.send.apply(null, argv);
-				});
+				if (GROUP_ID > 0) {
+					func(function(){
+						var argv = Array.prototype.slice.call(arguments);
+						argv.unshift(act);
+						messageBus.send.apply(null, argv);
+					});
+				}
 			});
 		item.appendChild(link);
 	return item;
@@ -130,9 +132,11 @@ function switchGroup(groupId){
 	if(GROUP_ID != groupId){
 		GROUP_ID = parseInt(groupId);
 		$$group(groupId).classList.add("selected");
+		$$("group-action").classList.add('enable');
 	}
 	else{
 		GROUP_ID = -1;
+		$$("group-action").classList.remove('enable');
 	}
 }
 
