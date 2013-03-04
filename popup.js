@@ -153,7 +153,7 @@ function createPageElement(page){
 			link.href = page.url;
 			link.addEventListener("click", function(event){
 				event.preventDefault();
-				action("activate-page", {pageId : page.pageId});
+				messageBus.send("activate-page", page.pageId);
 			});
 		item.appendChild(link);
 	return item;
