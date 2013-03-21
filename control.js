@@ -401,6 +401,9 @@ var KEY = {
 				INDEXES[matches[2]] = storage[key];
 			}
 		}
+		
+		validate();
+		
 		execQueue.shift()();
 	}
 	
@@ -419,6 +422,19 @@ var KEY = {
 			}
 		
 			execQueue.shift()();
+		});
+	}
+	
+	function validate(){
+		/* Validate index */
+		INDEXES.forEach(function(list, groupId){
+			list.forEach(function(pageId, index){
+				if (!(pageId in PAGES)) {
+					console.error('Page ' + pageId + ' does not exist, delete it');
+					delete list[index];
+					save(KEY.index(groupId), list);
+				}
+			});
 		});
 	}
 
