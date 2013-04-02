@@ -14,11 +14,6 @@ function $$(id){
 	return document.getElementById(id);
 }
 
-function $$group(group){
-	var id = !isNaN(parseInt(group)) ? group : group.groupId;
-	return $$("group-" + id);
-}
-
 function $$head(group){
 	var id = !isNaN(parseInt(group)) ? group : group.groupId;
 	return $$("group-head-" + id);
@@ -131,20 +126,16 @@ function setupActions(){
  // Visual Elements
 ////////////////////////////////////////////////////////////////////////////////
 function switchGroup(groupId){
-	var prev = $$group(GROUP_ID)
-	if(prev)
-		prev.classList.remove("selected");
-	
-	if(GROUP_ID != groupId){
+	if(GROUP_ID >= 0) {
+		$$head(GROUP_ID).classList.remove("selected");
+		$$list(GROUP_ID).classList.remove("selected");
+	}	
+	if(groupId >= 0){
 		GROUP_ID = parseInt(groupId);
-		$$group(groupId).classList.add("selected");
+		$$head(groupId).classList.add("selected");
+		$$list(groupId).classList.add("selected");
 		$$("group-action").classList.add('enable');
 		$('.action-button').removeAttr('disabled');
-	}
-	else{
-		GROUP_ID = -1;
-		$$("group-action").classList.remove('enable');
-		$('.action-button').attr('disabled', 'true');
 	}
 }
 
@@ -167,48 +158,40 @@ function createPageElement(page){
 	return item;
 }
 
-function createGroupElement(group){
-	var li = document.createElement("li");
-
-	var gitem = document.createElement("div");
-		gitem.id = "group-" + group.groupId;
-		gitem.classList.add("group");
+function createGroupElements(group){
+	var gitem = document.createElement("li");
+	var ghead = document.createElement("a");
+		ghead.id = "group-head-" + group.groupId;
+		ghead.classList.add("group-head");
+		ghead.textContent = group.name;
+		ghead.href = "#group-page-list-" + group.groupId;
+		ghead.addEventListener("click", function(event){
+			event.preventDefault();
+			switchGroup(group.groupId);
+		});
+		gitem.appendChild(ghead);
 		
-		var header = document.createElement("header");
-		var ghead = document.createElement("a");
-			ghead.id = "group-head-" + group.groupId;
-			ghead.classList.add("group-head");
-			ghead.textContent = group.name;
-			ghead.href = "#group-page-list-" + group.groupId;
-			ghead.addEventListener("click", function(event){
-				event.preventDefault();
-				gitem.classList.toggle("open");
-				switchGroup(group.groupId);
-			});
-			header.appendChild(ghead);
+	var glist = document.createElement("ul");
+		glist.id = "group-page-list-" + group.groupId;
+		glist.classList.add("group-page-list");
 			
-		var glist = document.createElement("ul");
-			glist.id = "group-page-list-" + group.groupId;
-			glist.classList.add("group-page-list");
-			
-		gitem.appendChild(header);
-		gitem.appendChild(glist);
-		
-		li.appendChild(gitem);
-	return li;
+	return [gitem, glist];
 }
 
 
  //  Handlers
 ////////////////////////////////////////////////////////////////////////////////
 function createGroup(group){
-	var list = createGroupElement(group);
-	$$("group-list").appendChild(list);
+	var pair = createGroupElements(group);
+	$$("group-list").appendChild(pair[0]);
+	$$("pages-list").appendChild(pair[1]);
 }
 
 function removeGroup(group){
-	var item = $$group(group);
-	item.parentNode.removeChild(item);
+	var head = $$head(group);
+	var list = $$list(group);
+	head.parentNode.removeChild(head);
+	list.parentNode.removeChild(list);
 }
 
 function updateGroup(group){
@@ -219,7 +202,7 @@ function updateGroup(group){
 function createPage(page){
 	var item = createPageElement(page);
 	var list = $$list(page.groupId);
-		$$("detached").appendChild(item);
+		list.appendChild(item);
 }
 
 function removePage(page){

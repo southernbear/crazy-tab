@@ -16,19 +16,25 @@
 		<style id="runtime-style"></style>
 	</head>
 	<body>
-		<!-- Container for groups containing pages-->
-		<ul id="group-list"></ul>
+		<div id="page-pane">
+			<!-- Container for groups containing pages-->
+			<ul id="pages-list"></ul>
+		</div>
+		<div id="group-pane">
+			<!-- Container for groups containing pages-->
+			<ul id="group-list"></ul>
 		
-		<!-- Container for pages not belonging to any group-->
-		<div id="detached"></div>
+			<!-- Container for pages not belonging to any group-->
+			<div id="detached"></div>
 		
-		<!-- Modal for group name-->
-		<form class="modal hide" id="name-modal" >
-			<button type="button" class="close" data-dismiss="modal">×</button>
-			<input id="group-name-input" type="text"/>
-			<button id="group-rename-button" href="#" class="btn btn-primary">Rename</button>
-		</form>
-		<ul id="group-action" class="control">
-		</ul>
+			<!-- Modal for group name-->
+			<form class="modal hide" id="name-modal" >
+				<button type="button" class="close" data-dismiss="modal">×</button>
+				<input id="group-name-input" type="text"/>
+				<button id="group-rename-button" href="#" class="btn btn-primary">Rename</button>
+			</form>
+			<ul id="group-action" class="control">
+			</ul>
+		</div>
 	</body>
 </html>
