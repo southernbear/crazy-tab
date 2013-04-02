@@ -163,7 +163,8 @@ a:hover{
 	background-color:#8FD94A;
 }
 
-.group-head:hover, .group-head.current:hover:before, .group-head.selected:hover{
+.group-head:hover, .group-head.current:hover:before, .group-head.selected:hover,
+.group-head.drag{
 	color:white;
 	background-color:#4A90D9;
 }

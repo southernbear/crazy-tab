@@ -188,6 +188,12 @@ var KEY = {
 	}
 
 	function attachPage(pageId, groupId, index){
+		if (PAGES[pageId].groupId != null) {
+			detachPage(pageId);
+		}
+		if (!(index >= 0)) {
+			index = INDEXES[groupId].length;
+		}
 		PAGES[pageId].groupId = parseInt(groupId);
 		INDEXES[groupId].splice(index, 0, pageId);
 		save(KEY.page(pageId), PAGES[pageId]);
@@ -196,7 +202,9 @@ var KEY = {
 		messageBus.send("page-attach", pageId, groupId, index);
 	}
 	
-	function detachPage(pageId, groupId, index){
+	function detachPage(pageId){
+		var groupId = PAGES[pageId].groupId;
+		var index = INDEXES[groupId].indexOf(pageId);
 		delete PAGES[pageId].groupId;
 		INDEXES[groupId].splice(index, 1);
 		save(KEY.page(pageId), PAGES[pageId]);

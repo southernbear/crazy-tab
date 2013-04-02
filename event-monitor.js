@@ -251,6 +251,7 @@ var messageHandler = {};
 		var windowId = control.getWindowId(groupId);
 		if(windowId == undefined){
 			var url = control.getGroupUrl(groupId);
+			console.log(url);
 			chrome.windows.create({url : url, focused : true});
 		}
 		else{
@@ -271,6 +272,32 @@ var messageHandler = {};
 		control.removeGroup(groupId);
 		if(windowId != undefined){
 			chrome.windows.remove(windowId);
+		}
+	}
+	
+	messageHandler['move-page'] = function(pageId, groupId){
+		var page = control.getPage(pageId);
+		var sourceW = control.getWindowId(page.groupId);
+		var targetW = control.getWindowId(groupId);
+		if (page.groupId != groupId) {
+			if (sourceW != null && targetW) {
+				var tabId = page.chromeId;
+				chrome.tabs.move([tabId], {windowId : targetW, index : -1});
+			}
+			else if (sourceW != null) {
+				var tabId = page.chromeId;
+				chrome.tabs.remove([tabId]);
+				page.index = -1;
+				control.createPage(page, groupId);
+			}
+			else if (targetW != null) {
+				control.removePage(pageId);
+				chrome.tabs.create({windowId : targetW, url : page.url, active : false});
+			}
+			else {
+				control.detachPage(pageId);
+				control.attachPage(pageId, groupId);
+			}
 		}
 	}
 

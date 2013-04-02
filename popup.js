@@ -146,6 +146,11 @@ function createPageElement(page){
 		item.classList.add("page");
 		item.dataset["pageid"] = page.pageId;
 		item.dataset["tabid"] = page.chromeId;
+		item.addEventListener('dragstart', function(event){
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/x-page-id', page.pageId);
+		});
+		
 		var link = document.createElement("a");
 			link.classList.add("title");
 			link.textContent = page.title;
@@ -168,6 +173,21 @@ function createGroupElements(group){
 		ghead.addEventListener("click", function(event){
 			event.preventDefault();
 			switchGroup(group.groupId);
+		});
+		
+		gitem.addEventListener('dragenter', function(event){
+			ghead.classList.add('drag');
+		});
+		gitem.addEventListener('dragleave', function(event){
+			ghead.classList.remove('drag');
+		});
+		gitem.addEventListener('dragover', function(event){
+			event.preventDefault();
+		});
+		gitem.addEventListener('drop', function(event){
+			ghead.classList.remove('drag');
+			var pageId = event.dataTransfer.getData('text/x-page-id');
+			messageBus.send('move-page', pageId, group.groupId);
 		});
 		gitem.appendChild(ghead);
 		
