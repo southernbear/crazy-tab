@@ -252,7 +252,10 @@ function init(){
 	clearChildren($$("group-list"));
 
 	chrome.runtime.getBackgroundPage(function(backgroundPage){
-		load(backgroundPage.control);
+	chrome.windows.getCurrent(function(currentWindow){
+		var control = backgroundPage.control;
+		load(control);
+		switchGroup(control.getGroupId(currentWindow.id));
 
 		var handler = {
 			"group-create" : createGroup,
@@ -267,7 +270,7 @@ function init(){
 		};
 	
 		messageBus = new MessageBus(handler);
-	});
+	})});
 	
 	setupActions();
 }
