@@ -287,7 +287,7 @@ var messageHandler = {};
 			else if (sourceW != null) {
 				var tabId = page.chromeId;
 				chrome.tabs.remove([tabId]);
-				page.index = -1;
+				page.index = null;
 				control.createPage(page, groupId);
 			}
 			else if (targetW != null) {

@@ -161,6 +161,7 @@ var KEY = {
 	function createPage(info, groupId, chromeId){
 		var pageId = getNewPageId();
 		var page = new Page(info, pageId, groupId, chromeId);
+		var index = info >= 0 ? info.index : INDEXES[groupId].length;
 		INDEXES[groupId].splice(info.index, 0, pageId);
 		save(KEY.page(pageId), page);
 		save(KEY.index(groupId), INDEXES[groupId]);
