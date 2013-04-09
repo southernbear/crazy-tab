@@ -7,8 +7,8 @@ function Control(){
 	
 	//Cache
 	var GROUPS  = [];
-	var INDEXES = [];
 	var PAGES   = [];
+	var INDEXES = function(groupId){return GROUPS[groupId].pages;}
 	
 	//Map
 	var mapWin = [];
@@ -32,6 +32,7 @@ function Control(){
 		this.groupId  = groupId;
 		this.chromeId = isNaN(chromeId) ? undefined : chromeId;
 		this.name     = window.name || "Window " + groupId;
+		this.pages    = [];
 		
 		this.update   = function(info){
 			for(var property in info){
@@ -44,10 +45,15 @@ function Control(){
 				}
 			}
 		}
+
+		this.getInfo  = function(){
+			return {
+				name : this.name,
+			};
+		}
+
 		GROUPS[groupId]  = this;
-		INDEXES[groupId] = INDEXES[groupId] || [];
 		mapWin[chromeId] = groupId;
-		return this;
 	}
 	
 	function Page(tab, _pageId, _groupId, _chromeId){
@@ -74,9 +80,17 @@ function Control(){
 				}
 			}
 		}
+
+		this.getInfo  = function(){
+			return {
+				url	   : this.url,
+				title  : this.title,
+				pinned : this.pinned
+			};
+		}
+
 		PAGES[pageId] = this;
 		mapPage[chromeId] = pageId;
-		return this;		
 	}
 	
 
@@ -84,17 +98,17 @@ function Control(){
  // Utils
 ////////////////////////////////////////////////////////////////////////////////
 	var getNewGroupId = (function(){
-		var id = 0;
+		var id = 1;
 		return function(){
-			for(; GROUPS[id] !== undefined ; id++);
+			for(; GROUPS[id] != null ; id++);
 			return id;
 		}
 	})();
 	
 	var getNewPageId = (function(){
-		var id = 0;
+		var id = 1;
 		return function(){
-			for(; PAGES[id] !== undefined ; id++);
+			for(; PAGES[id] != null ; id++);
 			return id;
 		}
 	})();
@@ -128,6 +142,18 @@ var KEY = {
 	page  : function(pageId) { return "page:"  + pageId; }
 }
 
+	function saveGroup(groupId) {
+		save(KEY.group(groupId), GROUPS[groupId].getInfo());
+	}
+
+	function saveIndex(groupId) {
+		save(KEY.index(groupId), getIndex(groupId));
+	}
+
+	function savePage(pageId) {
+		save(KEY.page(pageId), PAGES[pageId].getInfo());
+	}
+
 
  // Control
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,8 +161,8 @@ var KEY = {
 		var groupId = getNewGroupId();
 		var group = new Group(info, groupId, chromeId);
 	
-		save(KEY.group(groupId), group);
-		save(KEY.index(groupId), []);
+		saveGroup(groupId);
+		saveIndex(groupId);
 		
 		messageBus.send("group-create", group);
 	}
@@ -144,7 +170,6 @@ var KEY = {
 	function removeGroup(groupId){
 		delete mapWin[GROUPS[groupId].chromeId];
 		delete GROUPS[groupId];
-		delete INDEXES[groupId];
 		remove(KEY.group(groupId));
 		remove(KEY.index(groupId));
 		
@@ -153,7 +178,7 @@ var KEY = {
 	
 	function updateGroup(info, groupId){
 		GROUPS[groupId].update(info);
-		save(KEY.group(groupId), GROUPS[groupId]);
+		saveGroup(groupId);
 		
 		messageBus.send("group-update", GROUPS[groupId]);
 	}
@@ -161,21 +186,22 @@ var KEY = {
 	function createPage(info, groupId, chromeId){
 		var pageId = getNewPageId();
 		var page = new Page(info, pageId, groupId, chromeId);
-		var index = info >= 0 ? info.index : INDEXES[groupId].length;
-		INDEXES[groupId].splice(info.index, 0, pageId);
-		save(KEY.page(pageId), page);
-		save(KEY.index(groupId), INDEXES[groupId]);
+		var index = info.index >= 0 ? info.index : INDEXES(groupId).length;
+		INDEXES(groupId).splice(index, 0, page);
+		savePage(pageId);
+		saveIndex(groupId);
 		
 		messageBus.send("page-create", page);
 	}
 	
 	function removePage(pageId){
-		var groupId = PAGES[pageId].groupId;
-		var index = INDEXES[groupId];
-			index.splice(index.indexOf(pageId), 1);
-		delete mapPage[PAGES[pageId].chromeId];
+		var page = PAGES[pageId];
+		var groupId = page.groupId;
+		var index = INDEXES(groupId);
+		    index.splice(index.indexOf(page), 1);
+		delete mapPage[page.chromeId];
 		delete PAGES[pageId];
-		save(KEY.index(groupId), index);
+		saveIndex(groupId);
 		remove(KEY.page(pageId));
 		
 		messageBus.send("page-remove", pageId);
@@ -183,42 +209,44 @@ var KEY = {
 	
 	function updatePage(info, pageId){
 		PAGES[pageId].update(info);
-		save(KEY.page(pageId), PAGES[pageId]);
+		savePage(pageId);
 		
 		messageBus.send("page-update", PAGES[pageId]);
 	}
 
 	function attachPage(pageId, groupId, index){
-		if (PAGES[pageId].groupId != null) {
+		var page = PAGES[pageId];
+		if (page.groupId != null) {
 			detachPage(pageId);
 		}
 		if (!(index >= 0)) {
-			index = INDEXES[groupId].length;
+			index = INDEXES(groupId).length;
 		}
 		PAGES[pageId].groupId = parseInt(groupId);
-		INDEXES[groupId].splice(index, 0, pageId);
-		save(KEY.page(pageId), PAGES[pageId]);
-		save(KEY.index(groupId), INDEXES[groupId]);
+		INDEXES(groupId).splice(index, 0, page);
+		savePage(pageId);
+		saveIndex(groupId);
 		
 		messageBus.send("page-attach", pageId, groupId, index);
 	}
 	
 	function detachPage(pageId){
-		var groupId = PAGES[pageId].groupId;
-		var index = INDEXES[groupId].indexOf(pageId);
-		delete PAGES[pageId].groupId;
-		INDEXES[groupId].splice(index, 1);
-		save(KEY.page(pageId), PAGES[pageId]);
-		save(KEY.index(groupId), INDEXES[groupId]);
+		var page = PAGES[pageId];
+		var groupId = page.groupId;
+		var index = INDEXES(groupId).indexOf(page);
+		delete page.groupId;
+		INDEXES(groupId).splice(index, 1);
+		savePage(pageId);
+		saveIndex(groupId);
 		
 		messageBus.send("page-detach", pageId);
 	}
 	
 	function movePage(pageId, groupId, from, to){
-		var index = INDEXES[groupId];
-			index.splice(from, 1);
-			index.splice(to, 0, pageId);
-		save(KEY.index(groupId), index);
+		var index = INDEXES(groupId);
+		    index.splice(index.indexOf(PAGES[pageId]), 1);
+		    index.splice(to, 0, PAGES[pageId]);
+		saveIndex(groupId);
 		
 		messageBus.send("page-move", pageId, groupId, to);
 	}
@@ -229,13 +257,12 @@ var KEY = {
 	
 	function getGroupUrl(groupId){
 		var out;
-		var index = INDEXES[groupId];
+		var index = INDEXES(groupId);
 		if(index){
 			out = [];
-			var len = index.length;
-			for(var i in index){
-				out[i] = PAGES[index[i]].url;
-			}
+			index.forEach(function(page, i){
+				out[i] = page.url;
+			});
 		}
 		return out;
 	}
@@ -258,13 +285,12 @@ var KEY = {
 	
 	function getIndex(groupId){
 		var out;
-		var index = INDEXES[groupId];
+		var index = INDEXES(groupId);
 		if(index){
 			out = [];
-			var len = index.length;
-			for(var i in index){
-				out[i] = index[i];
-			}
+			index.forEach(function(page, i){
+				out[i] = page.pageId;
+			});
 		}
 		return out;
 	}
@@ -284,14 +310,14 @@ var KEY = {
 			return null;
 			
 		var match = false;
-		for(var groupId in INDEXES){
+		for(var groupId in GROUPS){
 			if(GROUPS[groupId].chromeId != undefined)
 				continue;
 			
-			var index = INDEXES[groupId];
+			var index = INDEXES(groupId);
 			if(tabs.length == index.length){
-				match = index.every(function(pageId, i){
-					return tabs[i].url == PAGES[pageId].url;
+				match = index.every(function(page, i){
+					return tabs[i].url == PAGES[page.pageId].url;
 				});
 			}
 			if(match)
@@ -330,6 +356,9 @@ var KEY = {
  // Load Database Functions
 ////////////////////////////////////////////////////////////////////////////////
 	function saveNewGroup(window){
+		if (window.type != 'normal')
+			return;
+
 		var groupId = getNewGroupId();
 		var group = new Group(window, groupId, window.id);
 		
@@ -338,52 +367,40 @@ var KEY = {
 			var pageId = getNewPageId();
 			var page = new Page(tab, pageId, groupId, tab.id);
 			PAGES[pageId] = page;
-			index.push(pageId);
+			index.push(page);
 		});
 		
-		INDEXES[groupId] = index;
+		group.pages = index;
 	}
 	
 	//map chrome windows to database windows
 	function mapChromeWindows(windows){
 		windows.forEach(function(window){
-			if(window.type != "normal")
-				return;
-			var match = false;
-			for(var groupId in INDEXES){
-				if(!match){
-					var index = INDEXES[groupId];
-					var tabs = window.tabs;
-					if(tabs.length == index.length){
-						match = index.every(function(pageId, i){
-							return tabs[i].url == PAGES[pageId].url;
-						});
-					}
-					if(match){
-						mapWin[window.id] = groupId;
-						GROUPS[groupId].chromeId = window.id;
-						for(var i = 0; i < tabs.length; i++){
-							mapPage[tabs[i].id] = index[i];
-							PAGES[index[i]].chromeId = tabs[i].id;
-						};
-					}
-				}
+			var groupId = findGroupId(window);
+			if(groupId != null){
+				mapWin[window.id] = groupId;
+				GROUPS[groupId].chromeId = window.id;
+
+				var index = INDEXES(groupId);
+				var tabs = window.tabs;
+				for(var i = 0; i < tabs.length; i++){
+					mapPage[tabs[i].id] = index[i].pageId;
+					index[i].chromeId = tabs[i].id;
+				};
 			}
-			if(!match){
+			else {
 				saveNewGroup(window);
 			}
 		});
 		
 		//Refresh database
 		var data = {};
-		GROUPS.forEach(function(group){
-			data[KEY.group(group.groupId)] = group;
+		GROUPS.forEach(function(group, groupId){
+			data[KEY.group(groupId)] = group.getInfo();
+			data[KEY.index(groupId)] = getIndex(groupId);
 		});
 		PAGES.forEach(function(page){
-			data[KEY.page(page.pageId)] = page;
-		});
-		INDEXES.forEach(function(index, i){
-			data[KEY.index(i)] = index;
+			data[KEY.page(page.pageId)] = page.getInfo();
 		});
 		sync.set(data);
 		
@@ -401,13 +418,25 @@ var KEY = {
 		for(key in storage){
 			var matches = key.match(/^(page):(\d+)/);
 			if(matches){
-				var page = new Page(storage[key], matches[2], storage[key].groupId);
+				var page = new Page(storage[key], matches[2]);
 			}
 		}
 		for(key in storage){
 			var matches = key.match(/^(index):(\d+)/);
 			if(matches){
-				INDEXES[matches[2]] = storage[key];
+				var idList = storage[key];
+				var index = INDEXES(matches[2]);
+				idList.forEach(function(pageId, i){
+					if (PAGES[pageId] == null)
+						console.error("Page " + pageId + " in group " + matches[2] + ' does not exist');
+					else if (PAGES[pageId].groupId != null){
+						console.error("Page " + pageId + " in both group " + matches[2] + ' and ' + PAGES[pageId].groupId);
+					}
+					else {
+						PAGES[pageId].groupId = matches[2];
+						index[i] = PAGES[pageId];
+					}
+				});
 			}
 		}
 		
@@ -436,14 +465,35 @@ var KEY = {
 	
 	function validate(){
 		/* Validate index */
-		INDEXES.forEach(function(list, groupId){
-			list.forEach(function(pageId, index){
-				if (!(pageId in PAGES)) {
-					console.error('Page ' + pageId + ' does not exist, delete it');
-					delete list[index];
-					save(KEY.index(groupId), list);
+		GROUPS.forEach(function(group, groupId){
+			var pages = group.pages;
+			pages.forEach(function(page, i){
+				if (page == null) {
+					console.error("Page " + i + " in group " + groupId + ' does not exist');
+					return;
 				}
 			});
+		});
+
+		PAGES.forEach(function(page, pageId){
+			var groupId = page.groupId;
+			if (groupId == null) {
+				if (GROUPS[0] == null)
+					new Group({name:'#Ghost ' + 0}, 0);
+				groupId = 0;
+				page.groupId = 0;
+			}
+
+			if (!(groupId in GROUPS)) {
+				console.warn("Group " + groupId + ' contains page ' + pageId + ' does not exist');
+				new Group({name:'#Ghost ' + groupId}, groupId);
+			}
+
+			if (GROUPS[groupId].pages.indexOf(page) < 0) {
+				console.warn("Page " + page.pageId + " is not in group " + groupId);
+				GROUPS[groupId].pages.push(page);
+				//remove(KEY.page(pageId));
+			}
 		});
 	}
 
