@@ -409,19 +409,19 @@ var KEY = {
 	}
 	
 	function loadDatabase (storage){
-		for(key in storage){
+		for(var key in storage){
 			var matches = key.match(/^(group):(\d+)/);
 			if(matches){
 				var group = new Group(storage[key], matches[2]);
 			}
 		}
-		for(key in storage){
+		for(var key in storage){
 			var matches = key.match(/^(page):(\d+)/);
 			if(matches){
 				var page = new Page(storage[key], matches[2]);
 			}
 		}
-		for(key in storage){
+		for(var key in storage){
 			var matches = key.match(/^(index):(\d+)/);
 			if(matches){
 				var idList = storage[key];
