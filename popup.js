@@ -136,6 +136,7 @@ function switchGroup(groupId){
 		$$list(groupId).classList.add("selected");
 		$$("group-action").classList.add('enable');
 		$('.action-button').removeAttr('disabled');
+		$$head(groupId).focus();
 	}
 }
 
